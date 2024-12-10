@@ -1,84 +1,137 @@
-import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import apiClient from "../services/apiClient";
-import useMovies from "../hooks/useMovies";
+import React, { useEffect, useState } from "react";
+import { useParams, useLocation } from "react-router-dom";
+import axios from "axios";
 
 const MovieDetail = () => {
   const { id } = useParams();
+  const { state } = useLocation();
+  const { nowPlaying = [], popular = [] } = state || {};
+
+  const imageBaseUrl = "https://image.tmdb.org/t/p/w500";
+
   const [movie, setMovie] = useState(null);
   const [cast, setCast] = useState([]);
-  const { data: nowPlaying } = useMovies("/movies/now_playing");
-  const { data: popular } = useMovies("/movies/popular");
-  const [imageBaseUrl, setImageBaseUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchDetails = async () => {
+    const fetchMovieDetails = async () => {
       try {
         setLoading(true);
+
+        // Buscar película en las listas proporcionadas
         const allMovies = [...nowPlaying, ...popular];
         const selectedMovie = allMovies.find(
           (movie) => movie.id === parseInt(id)
         );
-        if (!selectedMovie) throw new Error("Película no encontrada.");
+
+        if (!selectedMovie) {
+          throw new Error("Película no encontrada.");
+        }
 
         setMovie(selectedMovie);
-        setImageBaseUrl("https://image.tmdb.org/t/p/w500");
 
-        const response = await apiClient.get(`/movies/${id}/actors`);
-        setCast(response.data);
+        // Obtener datos del reparto
+        const castResponse = await axios.get(
+          `http://161.35.140.236:9005/api/movies/${id}/actors`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        setCast(
+          Array.isArray(castResponse.data.data) ? castResponse.data.data : []
+        );
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Ocurrió un error inesperado.");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDetails();
+    fetchMovieDetails();
   }, [id, nowPlaying, popular]);
 
-  if (loading) return <div>Cargando detalles...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading) return <div>Cargando...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!movie) return <div>Película no encontrada.</div>;
 
   return (
-    <div className="p-4">
-      <div className="flex">
-        <img
-          src={`${imageBaseUrl}${movie.poster_path}`}
-          alt={movie.title}
-          className="w-1/3 rounded-md"
-        />
-        <div className="ml-4">
-          <h1 className="text-3xl font-bold">{movie.title}</h1>
-          <p className="text-gray-600 mt-2">{movie.release_date}</p>
-          <p className="mt-4">
-            {movie.overview || "Sin descripción disponible."}
-          </p>
-          <p className="mt-2">
-            <strong>Votos:</strong> {movie.vote_average} ({movie.vote_count}{" "}
-            votos)
-          </p>
+    <div className="movie-detail">
+      {/* Encabezado */}
+      <header className="flex justify-between items-center p-4 bg-gray-100">
+        <h1 className="text-xl font-bold">AgileMovies</h1>
+        <div className="flex items-center gap-2">
+          <span>
+            Hola, <strong>Nombre Apellido</strong>
+          </span>
+          <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+        </div>
+      </header>
+
+      {/* Información principal */}
+      <div className="flex flex-col md:flex-row p-4 gap-4">
+        {/* Imagen principal */}
+        <div className="relative">
+          <img
+            src={`${imageBaseUrl}${movie.poster_path}`}
+            alt={movie.title}
+            className="movie-poster rounded-lg shadow-md"
+          />
+          {/* Imagen superpuesta */}
+          {cast.length > 0 && cast[0].profile_path && (
+            <img
+              src={`${imageBaseUrl}${cast[0].profile_path}`}
+              alt="Actor destacado"
+              className="absolute top-4 left-4 w-24 h-24 rounded-full border-4 border-white shadow-lg"
+            />
+          )}
+        </div>
+
+        {/* Detalles de la película */}
+        <div className="flex-1">
+          <h2 className="text-4xl font-bold">{movie.title}</h2>
+          <p className="text-gray-700 mt-4">{movie.overview}</p>
         </div>
       </div>
 
-      <h2 className="text-2xl font-bold mt-8">Reparto</h2>
-      <div className="grid grid-cols-4 gap-4 mt-4">
-        {cast.map((actor) => (
-          <div key={actor.id} className="text-center">
-            <img
-              src={
-                actor.profile_path
-                  ? `${imageBaseUrl}${actor.profile_path}`
-                  : "https://via.placeholder.com/150"
-              }
-              alt={actor.name}
-              className="rounded-md w-32 h-48 mx-auto"
-            />
-            <p className="font-bold mt-2">{actor.name}</p>
-            <p className="text-sm text-gray-600">{actor.character}</p>
-          </div>
-        ))}
+      {/* Reparto */}
+      <div className="movie-cast p-4">
+        <h2 className="text-2xl font-bold mb-4">Reparto</h2>
+        <div
+          className="flex overflow-x-auto gap-4 pb-4"
+          style={{ scrollSnapType: "x mandatory" }}
+        >
+          {cast.length > 0 ? (
+            cast.map((actor) => (
+              <div
+                key={actor.id}
+                className="actor-card flex-shrink-0 w-48 text-center"
+                style={{ scrollSnapAlign: "start" }}
+              >
+                <img
+                  src={
+                    actor.profile_path
+                      ? `${imageBaseUrl}${actor.profile_path}`
+                      : "https://via.placeholder.com/150"
+                  }
+                  alt={actor.name}
+                  className="actor-image w-full h-64 object-cover rounded-md shadow-md"
+                />
+                <p className="actor-name font-bold mt-2">{actor.name}</p>
+                <p className="actor-character text-gray-500 text-sm">
+                  {actor.character || "Personaje no especificado"}
+                </p>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-700">
+              No se encontró información del reparto.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

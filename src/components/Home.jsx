@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import useMovies from "../hooks/useMovies";
 
 const Home = () => {
@@ -15,20 +16,23 @@ const Home = () => {
   } = useMovies("/movies/popular");
 
   if (loadingNowPlaying || loadingPopular) return <div>Cargando...</div>;
-
-  if (errorNowPlaying || errorPopular) {
+  if (errorNowPlaying || errorPopular)
     return (
       <div>Error al cargar las películas. Por favor, inténtalo más tarde.</div>
     );
-  }
-
+  console.log("Now Playing:", nowPlaying);
+  console.log("Popular:", popular);
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Películas en Estreno</h1>
       <div className="grid grid-cols-4 gap-4">
-        {nowPlaying.length > 0 ? (
-          nowPlaying.map((movie) => (
-            <div key={movie.id} className="bg-gray-100 p-2 rounded-md">
+        {nowPlaying.map((movie) => (
+          <Link
+            key={movie.id}
+            to={`/movie/${movie.id}`}
+            state={{ nowPlaying, popular, imageBaseUrl: baseNowPlaying }}
+          >
+            <div className="bg-gray-100 p-2 rounded-md">
               <img
                 src={`${baseNowPlaying}${movie.poster_path}`}
                 alt={movie.title}
@@ -40,17 +44,19 @@ const Home = () => {
                 {movie.overview || "Sin descripción disponible."}
               </p>
             </div>
-          ))
-        ) : (
-          <p>No hay películas en estreno disponibles.</p>
-        )}
+          </Link>
+        ))}
       </div>
 
       <h1 className="text-2xl font-bold mt-8 mb-4">Películas Populares</h1>
       <div className="grid grid-cols-4 gap-4">
-        {popular.length > 0 ? (
-          popular.map((movie) => (
-            <div key={movie.id} className="bg-gray-100 p-2 rounded-md">
+        {popular.map((movie) => (
+          <Link
+            key={movie.id}
+            to={`/movie/${movie.id}`}
+            state={{ nowPlaying, popular, imageBaseUrl: baseNowPlaying }}
+          >
+            <div className="bg-gray-100 p-2 rounded-md">
               <img
                 src={`${basePopular}${movie.poster_path}`}
                 alt={movie.title}
@@ -62,10 +68,8 @@ const Home = () => {
                 {movie.overview || "Sin descripción disponible."}
               </p>
             </div>
-          ))
-        ) : (
-          <p>No hay películas populares disponibles.</p>
-        )}
+          </Link>
+        ))}
       </div>
     </div>
   );
