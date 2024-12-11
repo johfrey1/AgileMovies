@@ -1,6 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense, lazy } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import axios from "axios";
+
+// Componentes secundarios
+const Header = () => (
+  <header className="flex justify-between items-center p-4 bg-gray-100">
+    <h1 className="text-xl font-bold">AgileMovies</h1>
+    <div className="flex items-center gap-2">
+      <span>
+        Hola, <strong>Nombre Apellido</strong>
+      </span>
+      <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+    </div>
+  </header>
+);
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -60,16 +73,7 @@ const MovieDetail = () => {
 
   return (
     <div className="movie-detail">
-      {/* Encabezado */}
-      <header className="flex justify-between items-center p-4 bg-gray-100">
-        <h1 className="text-xl font-bold">AgileMovies</h1>
-        <div className="flex items-center gap-2">
-          <span>
-            Hola, <strong>Nombre Apellido</strong>
-          </span>
-          <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
-        </div>
-      </header>
+      <Header />
 
       {/* Información principal */}
       <div className="flex flex-col md:flex-row p-4 gap-4">
@@ -79,13 +83,14 @@ const MovieDetail = () => {
             src={`${imageBaseUrl}${movie.poster_path}`}
             alt={movie.title}
             className="movie-poster rounded-lg shadow-md"
+            loading="lazy" // Lazy loading para la imagen principal
           />
-          {/* Imagen superpuesta */}
           {cast.length > 0 && cast[0].profile_path && (
             <img
               src={`${imageBaseUrl}${cast[0].profile_path}`}
               alt="Actor destacado"
               className="absolute top-4 left-4 w-24 h-24 rounded-full border-4 border-white shadow-lg"
+              loading="lazy" // Lazy loading para imagen del actor destacado
             />
           )}
         </div>
@@ -119,6 +124,7 @@ const MovieDetail = () => {
                   }
                   alt={actor.name}
                   className="actor-image w-full h-64 object-cover rounded-md shadow-md"
+                  loading="lazy" // Lazy loading para imágenes del reparto
                 />
                 <p className="actor-name font-bold mt-2">{actor.name}</p>
                 <p className="actor-character text-gray-500 text-sm">

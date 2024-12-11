@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Link } from "react-router-dom";
 import Slider from "react-slick";
 import useMovies from "../hooks/useMovies";
@@ -86,6 +86,7 @@ const Home = () => {
                   src={`${baseNowPlaying}${movie.poster_path}`}
                   alt={movie.title}
                   className="w-full h-64 object-cover rounded-md shadow-md"
+                  loading="lazy" // Lazy loading para imágenes
                 />
                 <h2 className="font-bold text-md mt-2 text-center">
                   {movie.title}
@@ -111,6 +112,7 @@ const Home = () => {
                   src={`${basePopular}${movie.poster_path}`}
                   alt={movie.title}
                   className="rounded-md w-full h-64 object-cover"
+                  loading="lazy" // Lazy loading para imágenes
                 />
                 <h2 className="font-bold text-lg mt-2">{movie.title}</h2>
                 <p className="text-sm">{movie.release_date}</p>
